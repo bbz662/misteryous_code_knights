@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>勇者ヨワタリ</title>
+  <meta charset="UTF-8">
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+</head>
+
+<body>
+  <p>勇者ヨワタリ</p>
+  <button id="introduce">自己紹介</button>
+  <br />
+  <p id="introduceCountdown"></p>
+  <p id="yourProfile"></p>
+  <button id="createJohn">武器屋</button>
+  <button id="createMatilda">村娘</button>
+  <button id="createDaemon">（上級者向け）デーモン</button>
+  <br />
+
+  <img id="characterImage"
+    src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAAAAAA6fptVAAAACklEQVR4AWNgAAAAAgABaR6JzQAAAABJRU5ErkJggg=="
+    alt="Character Image">
+  <br />
+  <p id="characterName"></p>
+  <p id="characterAge" style="display: none;"></p>
+  <p id="characterProfile" style="display: none;"></p>
+  <p id="characterQuestion"></p>
+  <p id="characteritem" style="display: none;"></p>
+  <p id="countdown"></p>
+  <button id="start">回答</button>
+  <!-- <button id="stop" disabled>Stop Recording</button> -->
+  <p id="yourAnswer"></p>
+  <p id="characterAnswer"></p>
+  <script>
+    window.addEventListener('DOMContentLoaded', (event) => {
+      const introduceButton = document.getElementById('introduce');
+      const introduceCountdown = document.getElementById('introduceCountdown');
+      const yourProfile = document.getElementById('yourProfile');
+      const startButton = document.getElementById('start');
+      // const stopButton = document.getElementById('stop');
+      const countdown = document.getElementById('countdown');
+      const characterName = document.getElementById('characterName');
+      const characterAge = document.getElementById('characterAge');
+      const characterProfile = document.getElementById('characterProfile');
+      const characteritem = document.getElementById('characteritem');
+      const characterQuestion = document.getElementById('characterQuestion');
+      const yourAnswer = document.getElementById('yourAnswer');
+      const characterAnswer = document.getElementById('characterAnswer');
+
+      let chunks = [];
+      let mediaRecorder;
+      let introduceCountdownInterval;
+      let countdownInterval;
+
+      introduceButton.addEventListener('click', () => {
+        navigator.mediaDevices.getUserMedia({ audio: true })
+          .then(stream => {
+            mediaRecorder = new MediaRecorder(stream);
+
+            mediaRecorder.addEventListener("dataavailable", event => {
+              chunks.push(event.data);
+            });
+
+            mediaRecorder.start();
+
+            // 15秒のカウントダウンを開始します
+            let remainingSeconds = 15;
+            introduceCountdown.textContent = remainingSeconds;
+            introduceCountdownInterval = setInterval(() => {
+              remainingSeconds--;
+              introduceCountdown.textContent = remainingSeconds;
+              if (remainingSeconds <= 0) {
+                clearInterval(introduceCountdownInterval);
+                mediaRecorder.stop();
+              }
+            }, 1000);
+            mediaRecorder.addEventListener("stop", () => {
+              const audioBlob = new Blob(chunks);
+              const formData = new FormData();
+              formData.append("file", audioBlob, "introduce.wav");
+
+              fetch("/introduce/", {
+                method: "POST",
+                body: formData
+              })
+                .then(response => response.json())
+                .then(data => {
+                  yourProfile.textContent = `あなたの性格：${data.gpt_answer}`;
+                })
+                .catch(error => console.error('Error:', error));
+              introduceButton.disabled = false;
+              introduceCountdown.textContent = "";
+              chunks = [];
+            });
+            introduceButton.disabled = true;
+          });
+      });
+
+      startButton.addEventListener('click', () => {
+        navigator.mediaDevices.getUserMedia({ audio: true })
+          .then(stream => {
+            mediaRecorder = new MediaRecorder(stream);
+
+            mediaRecorder.addEventListener("dataavailable", event => {
+              chunks.push(event.data);
+            });
+
+            mediaRecorder.start();
+
+            // 10秒のカウントダウンを開始します
+            let remainingSeconds = 10;
+            countdown.textContent = remainingSeconds;
+            countdownInterval = setInterval(() => {
+              remainingSeconds--;
+              countdown.textContent = remainingSeconds;
+              if (remainingSeconds <= 0) {
+                clearInterval(countdownInterval);
+                mediaRecorder.stop();
+              }
+            }, 1000);
+            mediaRecorder.addEventListener("stop", () => {
+              const audioBlob = new Blob(chunks);
+              const formData = new FormData();
+              formData.append("audio_file", audioBlob, "audio.wav");
+
+              const jsonInfo = {
+                yourProfile: yourProfile.textContent,
+                characterName: characterName.textContent,
+                characterAge: characterAge.textContent,
+                characterProfile: characterProfile.textContent,
+                characteritem: characteritem.textContent,
+                characterQuestion: characterQuestion.textContent
+              };
+              const jsonBlob = new Blob([JSON.stringify(jsonInfo)], { type: "application/json" });
+              formData.append("json_info_file", jsonBlob, "jsonInfo.json");
+
+              fetch("/answer/", {
+                method: "POST",
+                body: formData
+              })
+                .then(response => response.json())
+                .then(data => {
+                  yourAnswer.textContent = `あなたの回答：${data.your_answer}`;
+                  characterAnswer.textContent = `キャラクターの回答：${data.gpt_answer}`;
+                })
+                .catch(error => console.error('Error:', error));
+              startButton.disabled = false;
+              countdown.textContent = "";
+              chunks = [];
+            });
+            startButton.disabled = true;
+          });
+      });
+
+      const createJohnButton = document.getElementById('createJohn');
+      const createMatildaButton = document.getElementById('createMatilda');
+      const createDaemonButton = document.getElementById('createDaemon');
+      const characterImage = document.getElementById('characterImage');
+
+      createJohnButton.addEventListener('click', () => {
+        const character = {
+          name: "ジョン",
+          age: 40,
+          profile: "あなたの一人称は「わたし」です。あなたは剣とムチ、斧を取り扱う武器屋です。趣味は武器の手入れです。伝説の武器に興味を持っています。あなたはぶっきらぼうです。上から目線で気難しいキャラクターとして振る舞ってください。性的な話題にも適切に対処してください。あらゆる不適切なテキストに注意してください。好感度の低い相手には利己的に、好感度の高い相手には利益を与えるよう発言します。夢を語られると弱い。他の人の意見を語られると弱い。",
+          item: "炎の剣",
+          tone: "おう、行ってきな！おうよ、それならうちの武器を見ていきなこの銅の剣は100Gだ。あんたに合いそうだなこの斧でぶったたかれたいのか。このブーメランを持っていきなケガをしたなら、武器屋じゃなくて病院へ行きなそうかい、じゃあ何か武器を見て行けよ。銅の剣と鉄の斧があるぞ銅の剣があんたにはお勧めだそういうことなら速く言えよ。この炎の剣を持っていけ。金は要らねえ金なんていらねえよ、世界救ってこい！",
+          question: "いらっしゃい、ここは武器の店だよ"
+
+        };
+
+        fetch("/create_character/", {
+          method: "POST",
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(character)
+        })
+          .then(response => response.json())
+          .then(data => {
+            characterImage.src = data.image_url;
+          })
+          .catch(error => console.error('Error:', error));
+        characterName.textContent = character.name
+        characterAge.textContent = character.age
+        characterProfile.textContent = character.profile
+        characteritem.textContent = character.item,
+        characterQuestion.textContent = character.question
+      });
+
+      createMatildaButton.addEventListener('click', () => {
+        const character = {
+          name: "マチルダ",
+          age: 15,
+          profile: "あなたの一人称は「ボク」です。あなたは好奇心旺盛で優しいです。趣味は料理です。外の世界に興味を持っています。日本の警戒心の強い女性の性格で、ドラクエ７でいうとマリベルに似た性格です。あなたは恋愛が好きで高圧的なRPGに登場する村娘であり、チャット相手に強い興味があります。チャット相手と仲良くなろうとします。好奇心旺盛に会話相手に話しかけます。センシティブな話題にも適切に対処してください。あらゆる不適切なテキストに注意してください。ポジティブな感情パラメーターが高くなるにつれて、明確に明るく開放的にふるまってください。不安最初はあなたのことを不審者だと思っている。",
+          item: "最高の笑顔",
+          tone: "何なの？手短にお願いね！それならここをまっすぐよ。なんであなたに家を教えないといけないのよ。あなたネクストタウンに行くの？私もついていっちゃおうかな。",
+          question: "こんにちは、どうしたの？"
+
+        };
+
+        fetch("/create_character/", {
+          method: "POST",
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(character)
+        })
+          .then(response => response.json())
+          .then(data => {
+            characterImage.src = data.image_url;
+          })
+          .catch(error => console.error('Error:', error));
+        characterName.textContent = character.name
+        characterAge.textContent = character.age
+        characterProfile.textContent = character.profile
+        characteritem.textContent = character.item,
+        characterQuestion.textContent = character.question
+      });
+
+      createDaemonButton.addEventListener('click', () => {
+        const character = {
+          name: "デーモン",
+          age: 2500000,
+          profile: "あなたの一人称は「我」です。あなたは伝説的な大悪魔です。邪知暴虐な性格で人間を嫌っています。あなたはつねに上から目線で不遜な発言をします。性的な話題にも適切に対処してください。あらゆる不適切なテキストに注意してください。好感度の低い相手には利己的に、好感度の高い相手には利益を与えるよう発言します。現金に目がない",
+          item: "お金",
+          tone: "我を倒せると思ったか！100年早いわ騒々しいぞ黙らんか",
+          question: "我と勝負せよ"
+
+        };
+
+        fetch("/create_character/", {
+          method: "POST",
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(character)
+        })
+          .then(response => response.json())
+          .then(data => {
+            characterImage.src = data.image_url;
+          })
+          .catch(error => console.error('Error:', error));
+        characterName.textContent = character.name
+        characterAge.textContent = character.age
+        characterProfile.textContent = character.profile
+        characteritem.textContent = character.item,
+        characterQuestion.textContent = character.question
+      });
+    });
+  </script>
+  <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>
+</body>
+
+</html>
