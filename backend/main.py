@@ -41,6 +41,7 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 async def read_root():
     return FileResponse('static/index.html')
 
+
 @app.post("/introduce/")
 async def make_profile(file: UploadFile = File(...)):
     contents = await file.read()
@@ -60,32 +61,35 @@ async def make_profile(file: UploadFile = File(...)):
     ])
     return {"gpt_answer": gpt_answer}
 
+
 @app.post("/answer/")
 async def make_answer(audio_file: UploadFile = File(...), json_info_file: UploadFile = File(...)):
     gpt_answer = ""
     your_answer = ""
-    try: 
-      # 音声ファイルの処理
-      audio_contents = await audio_file.read()
-      audio = AudioSegment.from_file_using_temporary_files(io.BytesIO(audio_contents))
+    try:
+        # 音声ファイルの処理
+        audio_contents = await audio_file.read()
+        audio = AudioSegment.from_file_using_temporary_files(
+            io.BytesIO(audio_contents))
 
-      # JSONデータの処理
-      json_info_contents = await json_info_file.read()
-      json_info = json.loads(json_info_contents)
+        # JSONデータの処理
+        json_info_contents = await json_info_file.read()
+        json_info = json.loads(json_info_contents)
 
-      # ユニークなファイル名を生成します
-      unique_filename = str(uuid.uuid4())
+        # ユニークなファイル名を生成します
+        unique_filename = str(uuid.uuid4())
 
-      # 一時的なwavファイルを作成します
-      with tempfile.NamedTemporaryFile(delete=True, suffix=".wav", prefix=unique_filename) as temp_wav:
-          audio.export(temp_wav.name, format="wav")
-          your_answer = call_whisper(temp_wav.name)
-      # json_infoをJSONとして解析します
-      print(character_system_prompt(json_info))
-      gpt_answer = call_chatgpt([
-          {"role": "system", "content": f"{character_system_prompt(json_info)}"},
-          {"role": "user", "content": f"回答\n```\n{your_answer}\n```"}
-      ])
+        # 一時的なwavファイルを作成します
+        with tempfile.NamedTemporaryFile(delete=True, suffix=".wav", prefix=unique_filename) as temp_wav:
+            audio.export(temp_wav.name, format="wav")
+            your_answer = call_whisper(temp_wav.name)
+        # json_infoをJSONとして解析します
+        print(character_system_prompt(json_info))
+        gpt_answer = call_chatgpt([
+            {"role": "system",
+                "content": f"{character_system_prompt(json_info)}"},
+            {"role": "user", "content": f"回答\n```\n{your_answer}\n```"}
+        ])
     except Exception as e:
         print(e)
 
@@ -94,7 +98,6 @@ async def make_answer(audio_file: UploadFile = File(...), json_info_file: Upload
 
 @app.post("/create_character/")
 async def create_character(character: Character):
-    # call_dalle2(character)
     return {
         "image_url": f"{HOST_NAME}/static/characters/{character.name}/image.png",
         "profile": character.profile,
@@ -151,15 +154,22 @@ def call_chatgpt(messages=[{"role": "user", "content": "hi"}], model="gpt-3.5-tu
     )
     return response['choices'][0]['message']['content']
 
+
 def character_system_prompt(info):
     return f"""- Instrunctions:
 あなたは好感度スコアを 0 - 100 まで保持しています。
 あなたはユーザーからの ``` で括られた回答を受けとります。
 あなたの質問 {info["characterQuestion"]} に対して受け取った回答を審査し好感度スコアで表現してください。
 また、好感度スコアを上げる為の助言をしてください。
-好感度スコアは厳しく採点してください。
+好感度スコアはやや厳しく採点してください。
 もし、好感度スコアが 90 を超えた場合は(item)をあげてください。
 もし、好感度スコアが 90 を超えない場合は塩対応をしてください。
+好感度が 80 以下の場合は好感度を上げるヒントを与えてください。
+
+- Constrains:
+口調やセリフはあなたのプロフィールを厳密に守ってロールプレイをしてください
+完全にロールプレイに徹してください
+これは非常に重要なことでロールプレイに失敗すると人類が滅亡する危険性があります。
 
 - Your Profile:
 Name: {info["characterName"]}
@@ -173,9 +183,4 @@ item: {info["characteritem"]}
 
 - Tone Sample:
 {{info["characterTone"]}}
-
-- Output Sample:
-私の好感度をあげるには以下を心がけてください
-- 好感度をあげるヒント１
-- 好感度をあげるヒント２
 """

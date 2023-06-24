@@ -4,32 +4,39 @@
 <head>
   <title>勇者ヨワタリ</title>
   <meta charset="UTF-8">
-  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css"
+    integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
 </head>
 
 <body>
-  <p>勇者ヨワタリ</p>
-  <button id="introduce">自己紹介</button>
-  <br />
-  <p id="introduceCountdown"></p>
-  <p id="yourProfile"></p>
-  <button id="createJohn">武器屋</button>
-  <button id="createMatilda">村娘</button>
-  <button id="createDaemon">（上級者向け）デーモン</button>
-  <br />
+  <div align="center">
+    <h1 class="text-primary">勇者ヨワタリ</h1>
+    <button id="introduce" class="btn btn-primary">自己紹介</button>
+    <br />
+    <p id="introduceCountdown"></p>
+    <p id="yourProfile"></p>
+    <button id="createJohn" class="btn btn-primary">武器屋</button>
+    <button id="createMatilda" class="btn btn-primary">村娘</button>
+    <button id="createDaemon" class="btn btn-primary">（上級者向け）デーモン</button>
+    <br />
+  </div>
+  <div align="center">
+    <br>
+    <img id="characterImage"
+      src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAAAAAA6fptVAAAACklEQVR4AWNgAAAAAgABaR6JzQAAAABJRU5ErkJggg=="
+      alt="Character Image"
+      class="rounded-circle" width="256" height="256">
 
-  <img id="characterImage"
-    src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAAAAAA6fptVAAAACklEQVR4AWNgAAAAAgABaR6JzQAAAABJRU5ErkJggg=="
-    alt="Character Image">
-  <br />
-  <p id="characterName"></p>
-  <p id="characterAge" style="display: none;"></p>
-  <p id="characterProfile" style="display: none;"></p>
-  <p id="characterQuestion"></p>
-  <p id="characteritem" style="display: none;"></p>
-  <p id="countdown"></p>
-  <button id="start">回答</button>
-  <!-- <button id="stop" disabled>Stop Recording</button> -->
+
+    <br />
+    <p id="characterName"></p>
+    <p id="characterAge" style="display: none;"></p>
+    <p id="characterProfile" style="display: none;"></p>
+    <p id="characterQuestion"></p>
+    <p id="characteritem" style="display: none;"></p>
+    <p id="countdown"></p>
+    <button id="start" class="btn btn-primary">回答</button>
+  </div>
   <p id="yourAnswer"></p>
   <p id="characterAnswer"></p>
   <script>
@@ -38,7 +45,6 @@
       const introduceCountdown = document.getElementById('introduceCountdown');
       const yourProfile = document.getElementById('yourProfile');
       const startButton = document.getElementById('start');
-      // const stopButton = document.getElementById('stop');
       const countdown = document.getElementById('countdown');
       const characterName = document.getElementById('characterName');
       const characterAge = document.getElementById('characterAge');
@@ -168,6 +174,8 @@
           question: "いらっしゃい、ここは武器の店だよ"
 
         };
+        yourAnswer.textContent = ""
+        characterAnswer.textContent = ""
 
         fetch("/create_character/", {
           method: "POST",
@@ -196,8 +204,9 @@
           item: "最高の笑顔",
           tone: "何なの？手短にお願いね！それならここをまっすぐよ。なんであなたに家を教えないといけないのよ。あなたネクストタウンに行くの？私もついていっちゃおうかな。",
           question: "こんにちは、どうしたの？"
-
         };
+        yourAnswer.textContent = ""
+        characterAnswer.textContent = ""
 
         fetch("/create_character/", {
           method: "POST",
@@ -226,8 +235,9 @@
           item: "お金",
           tone: "我を倒せると思ったか！100年早いわ騒々しいぞ黙らんか",
           question: "我と勝負せよ"
-
         };
+        yourAnswer.textContent = ""
+        characterAnswer.textContent = ""
 
         fetch("/create_character/", {
           method: "POST",
@@ -245,13 +255,19 @@
         characterAge.textContent = character.age
         characterProfile.textContent = character.profile
         characteritem.textContent = character.item,
-        characterQuestion.textContent = character.question
+          characterQuestion.textContent = character.question
       });
     });
   </script>
-  <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
-  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>
+  <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
+    integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
+    crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js"
+    integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js"
+    integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy"
+    crossorigin="anonymous"></script>
 </body>
 
 </html>
